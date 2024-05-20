@@ -8,7 +8,8 @@ modules = \
   modules/dom/window.scm \
   modules/math.scm \
   modules/math/rect.scm \
-  modules/math/vector.scm
+  modules/math/vector.scm\
+  modules/console.scm
 
 game.wasm: game.scm $(modules)
 	guild compile-wasm -L modules -o $@ $<

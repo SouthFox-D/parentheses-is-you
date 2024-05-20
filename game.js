@@ -66,6 +66,9 @@ window.addEventListener("load", async () => {
       },
       math: {
         random: () => Math.random()
+      },
+      console: {
+        log: (message) => console.log(message)
       }
     });
   } catch(e) {

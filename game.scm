@@ -1,13 +1,15 @@
 (import (scheme base)
         (scheme inexact)
         (hoot ffi)
+        (hoot debug)
         (dom canvas)
         (dom document)
         (dom element)
         (dom event)
         (dom image)
         (dom media)
-        (dom window))
+        (dom window)
+        (console))
 
 
 (define game-width    640.0)
@@ -29,3 +31,6 @@
 (set-element-height! canvas (exact game-height))
 
 (request-animation-frame draw-callback)
+
+(dprint "game-height" game-height)
+(console-log canvas)
