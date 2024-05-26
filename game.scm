@@ -50,7 +50,7 @@
   (goal level-goal set-level-goal!))
 
 
-(define wall (make-gelement (make-gelement-type #f "__________") '()))
+(define wall (make-gelement (make-gelement-type #f "________________") '()))
 (define wall2 (make-gelement (make-gelement-type #f "|") '()))
 (define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
 (define l-st (make-gelement (make-gelement-type #t "string-append") '(string-append)))
@@ -139,7 +139,8 @@
   (set-font! context "bold 24px monospace")
   (let ((grid (level-grid *level*))
         (left-parenthes (level-left-parenthes *level*))
-        (right-parenthes (level-right-parenthes *level*)))
+        (right-parenthes (level-right-parenthes *level*))
+        (goal (level-goal *level*)))
     ; Draw grid
     (do ((i 0 (+ i 1)))
         ((= i (vector-length grid)))
@@ -149,8 +150,11 @@
         (let* ((gele (vector-ref (vector-ref grid j) i))
                (avg-width (/ game-width (vector-length grid)))
                (avg-hight (/ game-height (vector-length grid))))
+
+          (set-font! context "12px monospace")
           (fill-text context (gelement-type-iamge (gelement-type gele)) (* 100 (+ i 1)) (* 50 (+ j 1))))))
 
+    (set-font! context "24px monospace")
     ; Draw left-parenthes
     (fill-text context "("
                (* (+ (car (parentheses-pos left-parenthes)) 1) 100)
@@ -171,11 +175,16 @@
                (string-append (slist->string (parentheses-content right-parenthes)) ")")
                0 400)
 
+    (fill-text context
+               (string-append "Goal: "  (convert goal))
+               0 450)
+
     ; Draw title
     (match (level-state *level*)
       ('win
        (set-text-align! context "center")
-       (fill-text context "Press Enter to next level" (/ game-width 2.0) (/ game-height 2.0)))
+       (set-font! context "bold 24px monospace")
+       (fill-text context "Goal equal! Press Enter to continue" (/ game-width 2.0) (/ game-height 2.0)))
       (_ #t))
     (request-animation-frame draw-callback)))
 (define draw-callback (procedure->external draw))
