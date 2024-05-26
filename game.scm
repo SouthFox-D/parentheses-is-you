@@ -54,3 +54,25 @@
 
 (add-event-listener! (current-document) "keydown"
                      (procedure->external on-key-down))
+
+
+(define-record-type <gelement-type>
+  (make-gelement-type interact? image)
+  gelement-type?
+  (interact? gelement-interact?)
+  (image gelement-type-iamge))
+
+(define-record-type <gelement>
+  (make-gelement type content)
+  gelement?
+  (type gelement-type)
+  (content gelement-content set-gelement-content!))
+
+(define wall (make-gelement (make-gelement-type #f "wall") #nil))
+(define apple (make-gelement (make-gelement-type #t "apple") #nil))
+
+(define ppp (vector (vector apple wall wall apple wall)
+                    (vector wall wall wall wall wall)
+                    (vector apple wall wall wall wall)
+                    (vector wall wall wall wall wall)
+                    (vector wall wall wall wall wall)))
