@@ -52,8 +52,8 @@
 (define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
 (define air (make-gelement (make-gelement-type #t "") '()))
 
-(define left-parenthes (make-parentheses 'left (cons 0 2) '(+ 1 2 3)))
-(define right-parenthes (make-parentheses 'right (cons 0 4) '(1 2 3)))
+(define left-parenthes (make-parentheses 'left (cons 0 2) '(+ 1 2)))
+(define right-parenthes (make-parentheses 'right (cons 4 2) '()))
 
 (define ppp (vector (vector air air air air air)
                     (vector wall wall wall wall wall)
@@ -76,6 +76,20 @@
   (append '()
           (funcall (car content)
                    (cdr content))))
+
+(define (convert e)
+  (cond ((symbol? e)
+         (symbol->string e))
+        ((number? e)
+         (number->string e))
+        ((string? e)
+         e)))
+
+(define (convert-iter e)
+  (string-append " " (convert e) " "))
+
+(define (slist->string slst)
+  (apply string-append (map convert-iter slst)))
 
 (define (collide-gelement! x y parenthes)
   (dprint "x" x)
@@ -123,13 +137,9 @@
         (let* ((gele (vector-ref (vector-ref grid j) i))
                (avg-width (/ game-width (vector-length grid)))
                (avg-hight (/ game-height (vector-length grid))))
-          (fill-text context (gelement-type-iamge (gelement-type gele)) (* 70 (+ i 1)) (* 50 (+ j 1))))))
+          (fill-text context (gelement-type-iamge (gelement-type gele)) (* 100 (+ i 1)) (* 50 (+ j 1))))))
 
     ; Draw left-parenthes
-
-    ;; (fill-text context "("
-    ;;            100
-    ;;            100)
     (fill-text context "("
                (* (+ (car (parentheses-pos left-parenthes)) 1) 100)
                (* (+ (cdr (parentheses-pos left-parenthes)) 1) 50))
@@ -138,13 +148,25 @@
     (fill-text context ")"
                (* (+ (car (parentheses-pos right-parenthes)) 1) 100)
                (* (+ (cdr (parentheses-pos right-parenthes)) 1) 50))
-  (request-animation-frame draw-callback)))
+
+    ; Draw hub
+    (set-text-align! context "left")
+    (fill-text context
+               (string-append "(" (slist->string (parentheses-content left-parenthes)))
+               0 350)
+
+    (fill-text context
+               (string-append (slist->string (parentheses-content right-parenthes)) ")")
+               0 400)
+    (request-animation-frame draw-callback)))
 (define draw-callback (procedure->external draw))
 
 (set-element-width! canvas (exact game-width))
 (set-element-height! canvas (exact game-height))
 
 (request-animation-frame draw-callback)
+
+
 
 ;; Input
 (define (on-key-down event)
