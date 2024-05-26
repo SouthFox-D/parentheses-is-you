@@ -52,10 +52,10 @@
 (define air (make-gelement (make-gelement-type #t "air") '()))
 
 (define left-parenthes (make-parentheses 'left (cons 0 0) '(+ 1 2 3)))
-(define right-parenthes (make-parentheses 'right (cons 1 1) '(+ 1 2 3)))
+(define right-parenthes (make-parentheses 'right (cons 1 1) '(1 2 3)))
 
 (define ppp (vector (vector apple apple apple apple wall)
-                    (vector wall wall wall wall wall)
+                    (vector air air air air air)
                     (vector apple wall wall wall wall)
                     (vector wall #nil wall wall wall)
                     (vector wall wall wall wall wall)))
@@ -79,11 +79,11 @@
 (define (collide-gelement! x y parenthes)
   (dprint "x" x)
   (dprint "y" y)
+  (dprint "content" (parentheses-content parenthes))
+  (dprint "par pos" (parentheses-pos parenthes))
   (if (and (>= x 0) (>= y 0))
       (let ((e (vector-ref (vector-ref (level-grid *level*) y) x))
             (len (vector-length (level-grid *level*))))
-        (dprint "content" (parentheses-content parenthes))
-        (dprint "par pos" (parentheses-pos parenthes))
         (if (and  (<= x len) (<= y len))
             (if (gelement-interact? (gelement-type e))
                 (begin
@@ -99,9 +99,10 @@
   (let ((left-parenthes (level-left-parenthes level))
         (right-parenthes (level-right-parenthes level)))
     (if (equal? (parentheses-pos left-parenthes) (parentheses-pos right-parenthes))
-        (eval-parenthes
-           (append (parentheses-content left-parenthes)
-                   (parentheses-content right-parenthes))))))
+        (dprint "eval!"
+                (eval-parenthes
+                 (append (parentheses-content left-parenthes)
+                         (parentheses-content right-parenthes)))))))
 ;; Draw
 (define (draw prev-time)
   (clear-rect context 0.0 0.0 game-width game-height)
@@ -118,21 +119,29 @@
 (request-animation-frame draw-callback)
 
 ;; Input
-(define key:left "ArrowLeft")
-(define key:right "ArrowRight")
-
 (define (on-key-down event)
   (let ((key (keyboard-event-code event)))
     (cond
-     ((string=? key key:left)
-      (dprint "key:" key)
-      (collide-gelement! (- (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
-      (set! *element-x* (- *element-x* 10)))
-     ((string=? key key:right)
-      (dprint "key:" key)
-      (set! *element-x* (+ *element-x* 10))
-      (collide-gelement! (+ (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
-      ))))
+     ((string=? key "KeyA")
+      (collide-gelement! (- (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*)))
+     ((string=? key "KeyD")
+      (collide-gelement! (+ (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*)))
+     ((string=? key "KeyW")
+      (collide-gelement! (car (parentheses-pos (level-left-parenthes *level*))) (- (cdr (parentheses-pos (level-left-parenthes *level*))) 1) (level-left-parenthes *level*)))
+     ((string=? key "KeyS")
+      (collide-gelement! (car (parentheses-pos (level-left-parenthes *level*))) (+ (cdr (parentheses-pos (level-left-parenthes *level*))) 1) (level-left-parenthes *level*)))
+     ((string=? key "ArrowLeft")
+      (collide-gelement! (- (car (parentheses-pos (level-right-parenthes *level*))) 1) (cdr (parentheses-pos (level-right-parenthes *level*))) (level-right-parenthes *level*)))
+     ((string=? key "ArrowRight")
+      (collide-gelement! (+ (car (parentheses-pos (level-right-parenthes *level*))) 1) (cdr (parentheses-pos (level-right-parenthes *level*))) (level-right-parenthes *level*)))
+     ((string=? key "ArrowUp")
+      (collide-gelement! (car (parentheses-pos (level-right-parenthes *level*))) (- (cdr (parentheses-pos (level-right-parenthes *level*))) 1) (level-right-parenthes *level*)))
+     ((string=? key "ArrowDown")
+      (collide-gelement! (car (parentheses-pos (level-right-parenthes *level*))) (+ (cdr (parentheses-pos (level-right-parenthes *level*))) 1) (level-right-parenthes *level*)))
+     )
+    (collide-pareneheses! *level*)
+    )
+  )
 
 (add-event-listener! (current-document) "keydown"
                      (procedure->external on-key-down))
