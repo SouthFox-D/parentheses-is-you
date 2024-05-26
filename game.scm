@@ -95,9 +95,7 @@
          (make-level-1))
         ((= *current-level* 2)
          (make-level-2))
-        )
-
-  )
+        ))
 
 (define *level* (make-current-level))
 
@@ -216,12 +214,16 @@
 
     ; Draw title
     (match (level-state *level*)
-      ('win
+      ((or 'win 'thanks)
        (set-text-align! context "center")
        (set-font! context "bold 24px monospace")
-       (fill-text context "Goal equal! Press Enter to continue" (/ game-width 2.0) (/ game-height 2.0)))
-      (_ #t))
-    (request-animation-frame draw-callback)))
+       (if (= *current-level* 2)
+           (begin (fill-text context "That's it, Thanks for playing." (/ game-width 2.0) (/ game-height 2.0))
+                  (set-level-state! *level* 'thanks))
+           (fill-text context "Goal equal! Press Enter to continue." (/ game-width 2.0) (/ game-height 2.0))
+           ))
+      (_ #t)))
+    (request-animation-frame draw-callback))
 (define draw-callback (procedure->external draw))
 
 (set-element-width! canvas (exact game-width))
