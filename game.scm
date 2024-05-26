@@ -1,6 +1,7 @@
 (import (scheme base)
         (scheme inexact)
         (hoot ffi)
+        (hoot match)
         (hoot debug)
         (dom canvas)
         (dom document)
@@ -40,8 +41,9 @@
   (content parentheses-content set-parentheses-content!))
 
 (define-record-type <level>
-  (make-level grid left-parenthes right-parenthes goal)
+  (make-level state grid left-parenthes right-parenthes goal)
   level?
+  (state level-state set-level-state!)
   (grid level-grid set-level-grid!)
   (left-parenthes level-left-parenthes set-left-parenthes!)
   (right-parenthes level-right-parenthes set-right-parenthes!)
@@ -51,16 +53,20 @@
 (define wall (make-gelement (make-gelement-type #f "__________") '()))
 (define wall2 (make-gelement (make-gelement-type #f "|") '()))
 (define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
+(define l-st (make-gelement (make-gelement-type #t "string-append") '(string-append)))
+(define l-hello (make-gelement (make-gelement-type #t "Hello ") '("Hello ")))
+(define l-world (make-gelement (make-gelement-type #t "World!") '("World!")))
 (define air (make-gelement (make-gelement-type #t "") '()))
 
 (define (make-level-1) (make-level
+                        'run
                         (vector
                          (vector air air air air air)
                          (vector wall wall wall wall wall)
-                         (vector air air air air air)
+                         (vector air l-st l-hello l-world air)
                          (vector wall wall wall wall wall)
                          (vector air air air air air))
-                        (make-parentheses 'left (cons 0 2) '(+ 1 2))
+                        (make-parentheses 'left (cons 0 2) '())
                         (make-parentheses 'right (cons 4 2) '())
                         "Hello World!"))
 
@@ -105,7 +111,6 @@
         (if (and  (< x len) (< y len))
             (if (gelement-interact? (gelement-type e))
                 (begin
-                  (dprint "Move!")
                   (set-grid! x y air)
                   (set-parentheses-pos! parenthes (cons x y))
                   (set-parentheses-content! parenthes (append (parentheses-content parenthes) (gelement-content e)))
@@ -121,12 +126,10 @@
         (let ((val (eval-parenthes (append (parentheses-content left-parenthes)
                                             (parentheses-content right-parenthes)))))
           (if (equal? val goal)
-              (dprint "Goal!")
+              (set-level-state! level 'win)
               (begin
                 (set-parentheses-content! left-parenthes '())
-                (set-parentheses-content! right-parenthes `(,val))
-              )
-            )))))
+                (set-parentheses-content! right-parenthes `(,val))))))))
 
 ;; Draw
 (define (draw prev-time)
@@ -167,6 +170,13 @@
     (fill-text context
                (string-append (slist->string (parentheses-content right-parenthes)) ")")
                0 400)
+
+    ; Draw title
+    (match (level-state *level*)
+      ('win
+       (set-text-align! context "center")
+       (fill-text context "Press Enter to next level" (/ game-width 2.0) (/ game-height 2.0)))
+      (_ #t))
     (request-animation-frame draw-callback)))
 (define draw-callback (procedure->external draw))
 
