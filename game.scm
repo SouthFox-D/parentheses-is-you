@@ -85,3 +85,9 @@
                (display (gelement-type-iamge (gelement-type e))))
         (display "False"))))
 
+(define (funcall fun args)
+  (cond ((equal? fun '+)
+         (apply + args))
+        ((equal? fun 'string-append)
+         (apply string-append args))
+        ))
