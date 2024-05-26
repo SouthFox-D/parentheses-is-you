@@ -19,8 +19,6 @@
 (define canvas (get-element-by-id "canvas"))
 (define context (get-context canvas "2d"))
 
-(define *element-x* (/ game-width 2.0))
-
 (define-record-type <gelement-type>
   (make-gelement-type interact? image)
   gelement-type?
@@ -57,6 +55,15 @@
 (define l-hello (make-gelement (make-gelement-type #t "Hello ") '("Hello ")))
 (define l-world (make-gelement (make-gelement-type #t "World!") '("World!")))
 (define air (make-gelement (make-gelement-type #t "") '()))
+(define l-plus (make-gelement (make-gelement-type #t "+") '(+)))
+(define l-sub (make-gelement (make-gelement-type #t "-") '(-)))
+(define l-div (make-gelement (make-gelement-type #t "÷") '(/)))
+(define l-time (make-gelement (make-gelement-type #t "×") '(*)))
+
+(define l-11 (make-gelement (make-gelement-type #t "11") '(11)))
+(define l-2 (make-gelement (make-gelement-type #t "2") '(2)))
+(define l-4 (make-gelement (make-gelement-type #t "4") '(4)))
+(define l-336 (make-gelement (make-gelement-type #t "336") '(336)))
 
 (define (make-level-1) (make-level
                         'run
@@ -70,7 +77,29 @@
                         (make-parentheses 'right (cons 4 2) '())
                         "Hello World!"))
 
-(define *level* (make-level-1))
+(define (make-level-2) (make-level
+                        'run
+                        (vector
+                         (vector air l-div air l-11 air)
+                         (vector air air air air air)
+                         (vector l-2 air l-plus air l-4)
+                         (vector air air air air l-336)
+                         (vector air l-time air air air))
+                        (make-parentheses 'left (cons 0 0) '())
+                        (make-parentheses 'right (cons 4 4) '())
+                        42))
+
+(define *current-level* 1)
+(define (make-current-level)
+  (cond ((= *current-level* 1)
+         (make-level-1))
+        ((= *current-level* 2)
+         (make-level-2))
+        )
+
+  )
+
+(define *level* (make-current-level))
 
 (define (set-grid! x y val)
   (vector-set! (vector-ref (level-grid *level*) y) x val))
@@ -78,6 +107,12 @@
 (define (funcall fun args)
   (cond ((equal? fun '+)
          (apply + args))
+        ((equal? fun '-)
+         (apply - args))
+        ((equal? fun '*)
+         (apply * args))
+        ((equal? fun '/)
+         (apply / args))
         ((equal? fun 'string-append)
          (apply string-append args))))
 
@@ -151,7 +186,7 @@
                (avg-width (/ game-width (vector-length grid)))
                (avg-hight (/ game-height (vector-length grid))))
 
-          (set-font! context "12px monospace")
+          (set-font! context "16px monospace")
           (fill-text context (gelement-type-iamge (gelement-type gele)) (* 100 (+ i 1)) (* 50 (+ j 1))))))
 
     (set-font! context "24px monospace")
@@ -199,8 +234,14 @@
   (let ((key (keyboard-event-code event)))
     (cond
      ((string=? key "KeyR")
-      (set! *level* (make-level-1))
+      (set! *level* (make-current-level))
       (request-animation-frame draw-callback))
+     ((string=? key "Enter")
+      (if (equal? (level-state *level*) 'win)
+          (begin
+            (set! *current-level* (+ *current-level* 1))
+            (set! *level* (make-current-level))
+            (request-animation-frame draw-callback))))
      ((string=? key "KeyA")
       (collide-gelement! (- (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*)))
      ((string=? key "KeyD")
