@@ -76,3 +76,12 @@
                     (vector apple wall wall wall wall)
                     (vector wall wall wall wall wall)
                     (vector wall wall wall wall wall)))
+
+(define (collide-gelement! x y)
+  (let ((e (vector-ref (vector-ref ppp x) y)))
+    (if (gelement-interact? (gelement-type e))
+        (begin (display "True")
+               (newline)
+               (display (gelement-type-iamge (gelement-type e))))
+        (display "False"))))
+
