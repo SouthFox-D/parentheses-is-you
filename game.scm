@@ -47,18 +47,19 @@
   (right-parenthes level-right-parenthes set-right-parenthes!))
 
 
-(define wall (make-gelement (make-gelement-type #f "wall") '()))
+(define wall (make-gelement (make-gelement-type #f "__________") '()))
+(define wall2 (make-gelement (make-gelement-type #f "|") '()))
 (define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
-(define air (make-gelement (make-gelement-type #t "air") '()))
+(define air (make-gelement (make-gelement-type #t "") '()))
 
-(define left-parenthes (make-parentheses 'left (cons 0 0) '(+ 1 2 3)))
-(define right-parenthes (make-parentheses 'right (cons 1 1) '(1 2 3)))
+(define left-parenthes (make-parentheses 'left (cons 0 2) '(+ 1 2 3)))
+(define right-parenthes (make-parentheses 'right (cons 0 4) '(1 2 3)))
 
-(define ppp (vector (vector apple apple apple apple wall)
+(define ppp (vector (vector air air air air air)
+                    (vector wall wall wall wall wall)
                     (vector air air air air air)
-                    (vector apple wall wall wall wall)
-                    (vector wall #nil wall wall wall)
-                    (vector wall wall wall wall wall)))
+                    (vector wall wall wall wall wall)
+                    (vector air air air air air)))
 
 (define *level* (make-level ppp left-parenthes right-parenthes))
 
@@ -81,10 +82,10 @@
   (dprint "y" y)
   (dprint "content" (parentheses-content parenthes))
   (dprint "par pos" (parentheses-pos parenthes))
-  (if (and (>= x 0) (>= y 0))
+  (if (and (and (>= x 0) (>= y 0) (and  (< x (vector-length (level-grid *level*))) (< y (vector-length (level-grid *level*))))))
       (let ((e (vector-ref (vector-ref (level-grid *level*) y) x))
             (len (vector-length (level-grid *level*))))
-        (if (and  (<= x len) (<= y len))
+        (if (and  (< x len) (< y len))
             (if (gelement-interact? (gelement-type e))
                 (begin
                   (dprint "Move!")
@@ -109,8 +110,35 @@
   (set-fill-color! context "#140c1c")
   (set-text-align! context "center")
   (set-font! context "bold 24px monospace")
-  (fill-text context "Hello, World! :)" *element-x* (/ game-height 2.0))
-  (request-animation-frame draw-callback))
+  (let ((grid (level-grid *level*))
+        (left-parenthes (level-left-parenthes *level*))
+        (right-parenthes (level-right-parenthes *level*))
+        )
+    ; Draw game element
+    (do ((i 0 (+ i 1)))
+        ((= i (vector-length grid)))
+      (do ((j 0 (+ j 1)))
+          ((= j (vector-length grid)))
+
+        (let* ((gele (vector-ref (vector-ref grid j) i))
+               (avg-width (/ game-width (vector-length grid)))
+               (avg-hight (/ game-height (vector-length grid))))
+          (fill-text context (gelement-type-iamge (gelement-type gele)) (* 70 (+ i 1)) (* 50 (+ j 1))))))
+
+    ; Draw left-parenthes
+
+    ;; (fill-text context "("
+    ;;            100
+    ;;            100)
+    (fill-text context "("
+               (* (+ (car (parentheses-pos left-parenthes)) 1) 100)
+               (* (+ (cdr (parentheses-pos left-parenthes)) 1) 50))
+
+    ; Draw right-parenthes
+    (fill-text context ")"
+               (* (+ (car (parentheses-pos right-parenthes)) 1) 100)
+               (* (+ (cdr (parentheses-pos right-parenthes)) 1) 50))
+  (request-animation-frame draw-callback)))
 (define draw-callback (procedure->external draw))
 
 (set-element-width! canvas (exact game-width))
