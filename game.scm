@@ -53,16 +53,18 @@
 (define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
 (define air (make-gelement (make-gelement-type #t "") '()))
 
-(define left-parenthes (make-parentheses 'left (cons 0 2) '(+ 1 2)))
-(define right-parenthes (make-parentheses 'right (cons 4 2) '()))
+(define (make-level-1) (make-level
+                        (vector
+                         (vector air air air air air)
+                         (vector wall wall wall wall wall)
+                         (vector air air air air air)
+                         (vector wall wall wall wall wall)
+                         (vector air air air air air))
+                        (make-parentheses 'left (cons 0 2) '(+ 1 2))
+                        (make-parentheses 'right (cons 4 2) '())
+                        "Hello World!"))
 
-(define ppp (vector (vector air air air air air)
-                    (vector wall wall wall wall wall)
-                    (vector air air air air air)
-                    (vector wall wall wall wall wall)
-                    (vector air air air air air)))
-
-(define *level* (make-level ppp left-parenthes right-parenthes "Hello World!"))
+(define *level* (make-level-1))
 
 (define (set-grid! x y val)
   (vector-set! (vector-ref (level-grid *level*) y) x val))
@@ -177,6 +179,9 @@
 (define (on-key-down event)
   (let ((key (keyboard-event-code event)))
     (cond
+     ((string=? key "KeyR")
+      (set! *level* (make-level-1))
+      (request-animation-frame draw-callback))
      ((string=? key "KeyA")
       (collide-gelement! (- (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*)))
      ((string=? key "KeyD")
