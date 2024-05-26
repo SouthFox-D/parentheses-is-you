@@ -40,11 +40,12 @@
   (content parentheses-content set-parentheses-content!))
 
 (define-record-type <level>
-  (make-level grid left-parenthes right-parenthes)
+  (make-level grid left-parenthes right-parenthes goal)
   level?
   (grid level-grid set-level-grid!)
   (left-parenthes level-left-parenthes set-left-parenthes!)
-  (right-parenthes level-right-parenthes set-right-parenthes!))
+  (right-parenthes level-right-parenthes set-right-parenthes!)
+  (goal level-goal set-level-goal!))
 
 
 (define wall (make-gelement (make-gelement-type #f "__________") '()))
@@ -61,7 +62,7 @@
                     (vector wall wall wall wall wall)
                     (vector air air air air air)))
 
-(define *level* (make-level ppp left-parenthes right-parenthes))
+(define *level* (make-level ppp left-parenthes right-parenthes "Hello World!"))
 
 (define (set-grid! x y val)
   (vector-set! (vector-ref (level-grid *level*) y) x val))
@@ -112,12 +113,19 @@
 
 (define (collide-pareneheses! level)
   (let ((left-parenthes (level-left-parenthes level))
-        (right-parenthes (level-right-parenthes level)))
+        (right-parenthes (level-right-parenthes level))
+        (goal (level-goal level)))
     (if (equal? (parentheses-pos left-parenthes) (parentheses-pos right-parenthes))
-        (dprint "eval!"
-                (eval-parenthes
-                 (append (parentheses-content left-parenthes)
-                         (parentheses-content right-parenthes)))))))
+        (let ((val (eval-parenthes (append (parentheses-content left-parenthes)
+                                            (parentheses-content right-parenthes)))))
+          (if (equal? val goal)
+              (dprint "Goal!")
+              (begin
+                (set-parentheses-content! left-parenthes '())
+                (set-parentheses-content! right-parenthes `(,val))
+              )
+            )))))
+
 ;; Draw
 (define (draw prev-time)
   (clear-rect context 0.0 0.0 game-width game-height)
@@ -126,9 +134,8 @@
   (set-font! context "bold 24px monospace")
   (let ((grid (level-grid *level*))
         (left-parenthes (level-left-parenthes *level*))
-        (right-parenthes (level-right-parenthes *level*))
-        )
-    ; Draw game element
+        (right-parenthes (level-right-parenthes *level*)))
+    ; Draw grid
     (do ((i 0 (+ i 1)))
         ((= i (vector-length grid)))
       (do ((j 0 (+ j 1)))
@@ -166,8 +173,6 @@
 
 (request-animation-frame draw-callback)
 
-
-
 ;; Input
 (define (on-key-down event)
   (let ((key (keyboard-event-code event)))
@@ -187,8 +192,7 @@
      ((string=? key "ArrowUp")
       (collide-gelement! (car (parentheses-pos (level-right-parenthes *level*))) (- (cdr (parentheses-pos (level-right-parenthes *level*))) 1) (level-right-parenthes *level*)))
      ((string=? key "ArrowDown")
-      (collide-gelement! (car (parentheses-pos (level-right-parenthes *level*))) (+ (cdr (parentheses-pos (level-right-parenthes *level*))) 1) (level-right-parenthes *level*)))
-     )
+      (collide-gelement! (car (parentheses-pos (level-right-parenthes *level*))) (+ (cdr (parentheses-pos (level-right-parenthes *level*))) 1) (level-right-parenthes *level*))))
     (collide-pareneheses! *level*)
     )
   )
