@@ -122,11 +122,12 @@
     (cond
      ((string=? key key:left)
       (dprint "key:" key)
+      (collide-gelement! (- (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
       (set! *element-x* (- *element-x* 10)))
      ((string=? key key:right)
       (dprint "key:" key)
       (set! *element-x* (+ *element-x* 10))
-      (collide-gelement! (+ 1 (car (parentheses-pos (level-left-parenthes *level*)))) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
+      (collide-gelement! (+ (car (parentheses-pos (level-left-parenthes *level*))) 1) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
       ))))
 
 (add-event-listener! (current-document) "keydown"
