@@ -20,6 +20,84 @@
 
 (define *element-x* (/ game-width 2.0))
 
+(define-record-type <gelement-type>
+  (make-gelement-type interact? image)
+  gelement-type?
+  (interact? gelement-interact?)
+  (image gelement-type-iamge))
+
+(define-record-type <gelement>
+  (make-gelement type content)
+  gelement?
+  (type gelement-type)
+  (content gelement-content set-gelement-content!))
+
+(define-record-type <parentheses>
+  (make-parentheses type pos content)
+  parentheses?
+  (type parentheses-type)
+  (pos parentheses-pos set-parentheses-pos!)
+  (content parentheses-content set-parentheses-content!))
+
+(define-record-type <level>
+  (make-level grid left-parenthes right-parenthes)
+  level?
+  (grid level-grid set-level-grid!)
+  (left-parenthes level-left-parenthes set-left-parenthes!)
+  (right-parenthes level-right-parenthes set-right-parenthes!))
+
+
+(define wall (make-gelement (make-gelement-type #f "wall") '()))
+(define apple (make-gelement (make-gelement-type #t "apple") '(4 5)))
+(define air (make-gelement (make-gelement-type #t "air") '()))
+
+(define left-parenthes (make-parentheses 'left (cons 0 0) '(+ 1 2 3)))
+(define right-parenthes (make-parentheses 'right (cons 1 1) '(+ 1 2 3)))
+
+(define ppp (vector (vector apple apple apple apple wall)
+                    (vector wall wall wall wall wall)
+                    (vector apple wall wall wall wall)
+                    (vector wall #nil wall wall wall)
+                    (vector wall wall wall wall wall)))
+
+(define *level* (make-level ppp left-parenthes right-parenthes))
+
+(define (set-grid! x y val)
+  (vector-set! (vector-ref (level-grid *level*) y) x val))
+
+(define (funcall fun args)
+  (cond ((equal? fun '+)
+         (apply + args))
+        ((equal? fun 'string-append)
+         (apply string-append args))))
+
+(define (eval-parenthes content)
+  (append '()
+          (funcall (car content)
+                   (cdr content))))
+
+(define (collide-gelement! x y parenthes)
+  (dprint "x" x)
+  (dprint "y" y)
+  (let ((e (vector-ref (vector-ref (level-grid *level*) y) x)))
+    (dprint "content" (parentheses-content parenthes))
+    (if (gelement-interact? (gelement-type e))
+        (begin
+          (dprint "Move!")
+          (set-grid! x y air)
+          (set-parentheses-pos! parenthes (cons x y))
+          (set-parentheses-content! parenthes (append (parentheses-content parenthes) (gelement-content e)))
+          (dprint "after-content" (parentheses-content parenthes))
+          (dprint "grid" (level-grid *level*)))
+        (dprint "Boop!"))))
+
+(define (collide-pareneheses! level)
+  (let ((left-parenthes (level-left-parenthes level))
+        (right-parenthes (level-right-parenthes level)))
+    (if (equal? (parentheses-pos left-parenthes) (parentheses-pos right-parenthes))
+        (eval-parenthes
+           (append (parentheses-content left-parenthes)
+                   (parentheses-content right-parenthes))))))
 ;; Draw
 (define (draw prev-time)
   (clear-rect context 0.0 0.0 game-width game-height)
@@ -35,9 +113,6 @@
 
 (request-animation-frame draw-callback)
 
-(dprint "game-height" game-height)
-(console-log canvas)
-
 ;; Input
 (define key:left "ArrowLeft")
 (define key:right "ArrowRight")
@@ -50,44 +125,9 @@
       (set! *element-x* (- *element-x* 10)))
      ((string=? key key:right)
       (dprint "key:" key)
-      (set! *element-x* (+ *element-x* 10))))))
+      (set! *element-x* (+ *element-x* 10))
+      (collide-gelement! (+ 1 (car (parentheses-pos (level-left-parenthes *level*)))) (cdr (parentheses-pos (level-left-parenthes *level*))) (level-left-parenthes *level*))
+      ))))
 
 (add-event-listener! (current-document) "keydown"
                      (procedure->external on-key-down))
-
-
-(define-record-type <gelement-type>
-  (make-gelement-type interact? image)
-  gelement-type?
-  (interact? gelement-interact?)
-  (image gelement-type-iamge))
-
-(define-record-type <gelement>
-  (make-gelement type content)
-  gelement?
-  (type gelement-type)
-  (content gelement-content set-gelement-content!))
-
-(define wall (make-gelement (make-gelement-type #f "wall") #nil))
-(define apple (make-gelement (make-gelement-type #t "apple") #nil))
-
-(define ppp (vector (vector apple wall wall apple wall)
-                    (vector wall wall wall wall wall)
-                    (vector apple wall wall wall wall)
-                    (vector wall wall wall wall wall)
-                    (vector wall wall wall wall wall)))
-
-(define (collide-gelement! x y)
-  (let ((e (vector-ref (vector-ref ppp x) y)))
-    (if (gelement-interact? (gelement-type e))
-        (begin (display "True")
-               (newline)
-               (display (gelement-type-iamge (gelement-type e))))
-        (display "False"))))
-
-(define (funcall fun args)
-  (cond ((equal? fun '+)
-         (apply + args))
-        ((equal? fun 'string-append)
-         (apply string-append args))
-        ))
